@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SG_AutoUpdater", "SG_AutoUpdater\SG_AutoUpdater.csproj", "{E95E3082-87DE-4755-9F3A-6248F3FDE370}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SG_VersionsAutoIncrement", "SG_VersionsAutoIncrement\SG_VersionsAutoIncrement.csproj", "{B985CDA1-6812-4A75-8C1B-CBFFDD2F13F4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E95E3082-87DE-4755-9F3A-6248F3FDE370}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E95E3082-87DE-4755-9F3A-6248F3FDE370}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E95E3082-87DE-4755-9F3A-6248F3FDE370}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E95E3082-87DE-4755-9F3A-6248F3FDE370}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B985CDA1-6812-4A75-8C1B-CBFFDD2F13F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B985CDA1-6812-4A75-8C1B-CBFFDD2F13F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B985CDA1-6812-4A75-8C1B-CBFFDD2F13F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B985CDA1-6812-4A75-8C1B-CBFFDD2F13F4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3EF1D40D-8701-4018-B012-4FE488202904}
+	EndGlobalSection
+EndGlobal
