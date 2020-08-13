@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Windows;
 
 namespace SG_VersionsAutoIncrement
 {
@@ -11,106 +12,92 @@ namespace SG_VersionsAutoIncrement
     {
         private static string _assemblyVersion = @"\[assembly\: AssemblyVersion\(""(\d{1,})\.(\d{1,})\.(\d{1,})\.(\d{1,})""\)\]";
         private static string _assembluFileVersion = @"\[assembly\: AssemblyFileVersion\(""(\d{1,})\.(\d{1,})\.(\d{1,})\.(\d{1,})""\)\]";
+        private static int? _buildNumber = null;
+
         static void Main(string[] args)
         {
             try
             {
-                string str = File.ReadAllText(@"..\..\Properties\AssemblyInfo.cs");
-
+                _buildNumber = GetBuild() + 1;
             }
             catch (Exception ex)
             {
+                MessageBox.Show(ex.Message, "GIT WARNING!", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _buildNumber = null;
+            }
 
+
+            try
+            {
+                string assemblyInfoText = File.ReadAllText(@"..\..\..\" + args[1] + @"\Properties\AssemblyInfo.cs");
+                string result = GetResult(_assemblyVersion, assemblyInfoText, "AssemblyVersion");
+                result = GetResult(_assembluFileVersion, result, "AssemblyFileVersion");
+
+                File.Delete(@"..\..\Properties\AssemblyInfo.~cs");
+                File.Copy(@"..\..\Properties\AssemblyInfo.cs", @"..\..\Properties\AssemblyInfo.~cs");
+                File.WriteAllText(@"..\..\Properties\AssemblyInfo.cs", result);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "WARNING!", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
-        private static string GetResult(string pattern, string str, string app)
+        private static string GetResult(string pattern, string assemblyInfoText, string app)
         {
-            int _build;
+            int _revision;
 
             Regex regex = new Regex(pattern);
 
-            Match m = regex.Match(str);
+            Match m = regex.Match(assemblyInfoText);
 
-            _build = Convert.ToInt32(m.Groups[3].Value) + 1;
+            String buildNumber = _buildNumber?.ToString() ??  m.Groups[3].Value;
 
-            string rz = string.Format("[assembly: {4}(\"{0}.{1}.{2}.{3}\")]", m.Groups[1], m.Groups[2], _build, _revno, app);
-            return regex.Replace(str, rz);
+            _revision = Convert.ToInt32(m.Groups[4].Value) + 1;
+
+            string result = string.Format("[assembly: {4}(\"{0}.{1}.{2}.{3}\")]", m.Groups[1], m.Groups[2], buildNumber, _revision, app);
+            return regex.Replace(assemblyInfoText, result);
         }
 
         private static int GetBuild()
         {
-            //Process gitProcess = new Process();
-            //gitProcess.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
-            //gitProcess.StartInfo.FileName = Path.Combine(ProgramFilesx86(), @"Git\git-bash.exe");
-            //gitProcess.StartInfo.Arguments = @"rev-list master --count";
-            //gitProcess.StartInfo.UseShellExecute = false;
-            //gitProcess.StartInfo.RedirectStandardOutput = true;
-            //gitProcess.StartInfo.RedirectStandardError = true;
-            //gitProcess.OutputDataReceived += (sender, e) => 
-            //{
-            //    if (e.Data == null)
-            //        outputWaitHandle.Set();
-            //    else
-            //        output.AppendLine(e.Data);
-            //};
-
-
-            //gitProcess.Start();
-
-            //StreamWriter sortStreamWriter = gitProcess.StandardInput;
-            //gitProcess.BeginOutputReadLine();
-            //sortStreamWriter.Close();
-            //gitProcess.WaitForExit();
-            //return Convert.ToInt32(sortOutput[0].ToString());
-
             Process process = new Process();
             process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
-            process.StartInfo.FileName = Path.Combine(ProgramFilesx86(), @"Git\git-bash.exe");
+            process.StartInfo.FileName = Path.Combine(ProgramFilesx86(), @"Git\cmd\git.exe");
             process.StartInfo.Arguments = @"rev-list master --count";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
 
             StringBuilder output = new StringBuilder();
+            Version result = new Version();
             int timeout = 10000;
 
             using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
-                using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
+            using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
+            {
+                process.OutputDataReceived += (sender, e) =>
                 {
-                    process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (e.Data == null)
-                            outputWaitHandle.Set();
-                        else
-                            output.AppendLine(e.Data);
-                    };
+                    if (e.Data == null)
+                        outputWaitHandle.Set();
+                    else
+                        output.AppendLine(e.Data);
+                };
 
-                    process.Start();
-                    process.BeginOutputReadLine();
+                process.Start();
+                process.BeginOutputReadLine();
 
-                    if (process.WaitForExit(timeout) && outputWaitHandle.WaitOne(timeout))
-                    {
-                        string text = File.ReadAllText(@"..\..\..\" + args[1] + @"\Properties\AssemblyInfo.cs");
-
-                        Match match = new Regex("AssemblyVersion\\(\"(.*?)\"\\)").Match(text);
-                        Version ver = new Version(match.Groups[1].Value);
-                        int build = args[0] == "Release" ? ver.Build + 1 : ver.Build;
-                        Version newVer = new Version(ver.Major, ver.Minor, build, Convert.ToInt16(output.ToString().Trim()));
-
-                        text = Regex.Replace(text, @"AssemblyVersion\((.*?)\)", "AssemblyVersion(\"" + newVer.ToString() + "\")");
-                        text = Regex.Replace(text, @"AssemblyFileVersionAttribute\((.*?)\)", "AssemblyFileVersionAttribute(\"" + newVer.ToString() + "\")");
-                        text = Regex.Replace(text, @"AssemblyFileVersion\((.*?)\)", "AssemblyFileVersion(\"" + newVer.ToString() + "\")");
-
-                        File.WriteAllText(@"..\..\..\" + args[1] + @"\Properties\AssemblyInfo.cs", text);
-                    }
+                if (!(process.WaitForExit(timeout) && outputWaitHandle.WaitOne(timeout)))
+                {
+                    throw new Exception("Failed to load build version from git. This parameter has not been changed!");
                 }
+                return Convert.ToInt32(output.ToString().Trim());
+            }
         }
 
-        static string ProgramFilesx86()
+        private static string ProgramFilesx86()
         {
-            if (8 == IntPtr.Size
-                || (!String.IsNullOrEmpty(Environment.GetEnvironmentVariable("PROCESSOR_ARCHITEW6432"))))
+            if (4 == IntPtr.Size)
             {
                 return Environment.GetEnvironmentVariable("ProgramFiles(x86)");
             }

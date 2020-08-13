@@ -50,4 +50,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>"$(SolutionDir)SG_VersionsAutoIncrement.exe" $(ConfigurationName) "$(ProjectName)"</PreBuildEvent>
+  </PropertyGroup>
 </Project>
